@@ -59,7 +59,12 @@ def fileIsDocumented(filePath):
 		return False
 	
 	# Check if the object is documented
-	originaldoc = minidom.parse(filePath)
+
+	try:
+		originaldoc = minidom.parse(filePath)
+	except Exception:
+		return False
+
 	briefList = originaldoc.getElementsByTagName('briefdescription')
 	detailList = originaldoc.getElementsByTagName('detaileddescription')
 
@@ -80,14 +85,21 @@ def nameForFile(filePath):
 		return None
 	
 	xmlDoc = minidom.parse(filePath)
-	return xmlDoc.getElementsByTagName("name")[0].firstChild.data
+
+	try:
+		return xmlDoc.getElementsByTagName("name")[0].firstChild.data
+	except Exception:
+		return "<NoName/>"
 
 def typeForFile(filePath):
 	if not os.path.splitext(filePath)[1] == ".xml":
 		return None
 		
 	xmlDoc = minidom.parse(filePath)
-	return xmlDoc.getElementsByTagName("object")[0].attributes["kind"].value
+	try:
+		return xmlDoc.getElementsByTagName("object")[0].attributes["kind"].value
+	except Exception:
+		return "<NoType/>"
 
 def cleanXML(filePath, outputDirectory):
 	if not fileIsDocumented(filePath):
@@ -1050,6 +1062,8 @@ def linkify(directory, shouldEstablishIPhoneLinks):
 					target = "../Categories/{name}"
 				elif objectType == "protocol":
 					target = "../Protocols/{name}"
+				else:
+					continue
 					
 				documentedTargets[objectName] = target
 			
@@ -1071,6 +1085,10 @@ def linkify(directory, shouldEstablishIPhoneLinks):
 					continue
 				
 				refName = refNode.childNodes[0].nodeValue
+				
+				if documentedTargets.has_key(refName) == False:
+					continue
+
 				formatString = documentedTargets[refName]
 				refTarget = formatString.format(name=refName)
 				refNode.setAttribute("id", refTarget)
